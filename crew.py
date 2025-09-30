@@ -1,26 +1,23 @@
-from crewai import Task, Crew
-from agents import query_parser, code_writer, code_executor
+import logging
+from agents.query_parser import parse_query
+from agents.code_writer import code_writer
+from agents.code_executor import execute
 
-# Task 1: Parse query
-task1 = Task(
-    description="Parse the user query into a structured request",
-    agent=query_parser
-)
+def run_query(query: str):
+    logging.info(f"Input query: {query}")
 
-# Task 2: Write code
-task2 = Task(
-    description="Generate Python code to fetch stock data and produce a plot",
-    agent=code_writer
-)
+    try:
+        structured = parse_query(query)
+    except Exception as e:
+        return {"success": False, "stage": "parse", "error": str(e)}
 
-# Task 3: Execute code
-task3 = Task(
-    description="Run the generated Python code and return the final plot or data",
-    agent=code_executor
-)
+    try:
+        analysis_fn = code_writer(structured)
+    except Exception as e:
+        return {"success": False, "stage": "code_writer", "error": str(e)}
 
-# Orchestrate the workflow
-financial_crew = Crew(
-    agents=[query_parser, code_writer, code_executor],
-    tasks=[task1, task2, task3]
-)
+    exec_res = execute(analysis_fn)
+    if not exec_res["success"]:
+        return {"success": False, "stage": "execute", "error": exec_res["error"]}
+
+    return {"success": True, "stage": "done", "data": exec_res["result"]}
