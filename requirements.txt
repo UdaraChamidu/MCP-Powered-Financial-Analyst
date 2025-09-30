@@ -1,0 +1,11 @@
+crewai 
+yfinance 
+matplotlib 
+pandas 
+streamlit
+openai 
+python-dotenv
+
+
+
+
